@@ -17,7 +17,7 @@
 }
 
 .vjs-related-carousel-holder.active {
-  height: 150px;
+  height: 130px;
   -webkit-transition: height 0.25s ease-in;
   -moz-transition: height 0.25s ease-in;
   -ms-transition: height 0.25s ease-in;
@@ -25,18 +25,21 @@
   transition: height 0.25s ease-in;
 }
 
+.vjs-related-carousel-holder h5 {
+  font-size: 1.5em;
+}
+
 .vjs-carousel-viewport {
   position: relative;
-  height: 150px;
 }
 
 .carousel-items {
   width: 1000%;
   list-style: none;
   position: relative;
-  height: 150px;
   padding-left: 50px;
   left: 0;
+  display: table;
 
   -webkit-transition: left 0.25s linear;
   -moz-transition: left 0.25s linear;
@@ -47,10 +50,22 @@
 
 .carousel-item {
   list-style-type: none;
-  display: inline-block;
-  margin-right: 20px;
-  width: 156px;
   float: left;
+  display: table-cell;
+  width: 110px;
+}
+
+.carousel-item img {
+  width: auto !important;
+}
+
+.carousel-item a {
+  text-decoration: none;
+}
+
+.carousel-item .carousel-item-title {
+  font-size: 10px;
+  color: white;
 }
 
 .vjs-carousel-left-button, .vjs-carousel-right-button {

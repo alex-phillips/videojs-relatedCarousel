@@ -105,7 +105,7 @@
     carousel.prototype.buildCarousel = function(config) {
       this.config = config;
       this.items.innerHTML = '';
-      this.maxPosition = (-176) * (this.config.length - 1)
+      this.maxPosition = (-110) * (this.config.length - 1)
 
       // Initialize carousel items
       for (var i = 0; i < this.config.length; i++) {
@@ -130,7 +130,8 @@
 
         this.onItemClick(i, anchor, this.config[i]);
 
-        var title = document.createElement('span');
+        var title = document.createElement('div');
+        title.className = 'carousel-item-title';
         title.innerHTML = this.config[i].title;
         anchor.appendChild(title);
 
@@ -176,7 +177,7 @@
       if (player.carousel.currentPosition === 0) {
         return;
       }
-      player.carousel.currentPosition = player.carousel.currentPosition + 176;
+      player.carousel.currentPosition = player.carousel.currentPosition + 110;
       player.carousel.items.style.left = player.carousel.currentPosition + 'px';
     };
 
@@ -184,7 +185,7 @@
       if (player.carousel.currentPosition <= player.carousel.maxPosition) {
         return;
       }
-      player.carousel.currentPosition = player.carousel.currentPosition - 176;
+      player.carousel.currentPosition = player.carousel.currentPosition - 110;
       player.carousel.items.style.left = player.carousel.currentPosition + 'px';
     };
 
