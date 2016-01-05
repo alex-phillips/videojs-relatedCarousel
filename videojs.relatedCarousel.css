@@ -102,7 +102,7 @@
   content: "\e00d";
 }
 
-.vjs-fade-out {
+.vjs-user-inactive.vjs-playing .vjs-fade-out {
   display: block;
   visibility: hidden;
   opacity: 0;
@@ -121,7 +121,7 @@
   transition-delay: 2s !important;
 }
 
-.vjs-default-skin.vjs-user-inactive .vjs-related-carousel-holder {
+.vjs-default-skin.vjs-user-inactive.vjs-playing .vjs-related-carousel-holder {
   display: block;
   visibility: hidden;
   opacity: 0;
