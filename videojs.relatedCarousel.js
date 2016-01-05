@@ -27,176 +27,187 @@
 
   vjs.plugin('relatedCarousel', function(options) {
     var player = this,
-      settings = extend([], defaults, options || []);
+      settings = extend([], defaults, options || []),
+      carousel = function() {
+        this.controlBarButton = document.createElement('div');
 
-    var carousel = {
-      controlBarButton: document.createElement('div'),
+        this.holderDiv = document.createElement('div');
+        this.title = document.createElement('h5');
 
-      holderDiv: document.createElement('div'),
-      title: document.createElement('h5'),
+        this.viewport = document.createElement('div');
+        this.items = document.createElement('ul');
 
-      viewport: document.createElement('div'),
-      items: document.createElement('ul'),
+        this.leftButton = document.createElement('div');
+        this.leftButtonContent = document.createElement('div');
 
-      leftButton: document.createElement('div'),
-      leftButtonContent: document.createElement('div'),
+        this.rightButton = document.createElement('div');
+        this.rightButtonContent = document.createElement('div');
 
-      rightButton: document.createElement('div'),
-      rightButtonContent: document.createElement('div'),
-
-      config: null,
-      currentPosition: 0,
-      maxPosition: 0,
-      currentVideoIndex: -1,
-      isOpen: false,
-      open: function() {
-        if (!carousel.holderDiv.className.match(/active/)) {
-          carousel.holderDiv.className = carousel.holderDiv.className + " active";
-        }
-        this.isOpen = true;
-      },
-      close: function() {
-        if (carousel.holderDiv.className.match(/active/)) {
-          carousel.holderDiv.className = carousel.holderDiv.className.replace(/\s*active\s*/, '');
-        }
+        this.config = null;
+        this.currentPosition = 0;
+        this.maxPosition = 0;
+        this.currentVideoIndex = -1;
         this.isOpen = false;
-      },
-      toggle: function() {
-        if (this.isOpen) {
-          this.close();
-        } else {
-          this.open();
+      };
+
+    carousel.prototype.open = function() {
+      if (!this.isOpen) {
+        if (!this.holderDiv.className.match(/(?:^|\s)active(?!\S)/g)) {
+          this.holderDiv.className = this.holderDiv.className + " active";
         }
-      },
+      }
+      this.isOpen = true;
+    };
 
-      initiateVideo: function(index, config, trigger) {
-        currentVideoIndex = index;
-        if (config.callback !== undefined) {
-          config.callback(player, config, {
-            trigger: trigger,
-            newIndex: currentVideoIndex
-          });
-        } else {
-          carousel.close();
-          if (config.src !== undefined) {
-            player.src(config.src);
-            player.play();
-          } else {
-            window.location = config.url;
-          }
+    carousel.prototype.close = function() {
+      if (this.isOpen) {
+        if (this.holderDiv.className.match(/(?:^|\s)active(?!\S)/g)) {
+          this.holderDiv.className = this.holderDiv.className.replace(/(?:^|\s)active(?!\S)/g, '')
         }
-      },
+      }
+      this.isOpen = false;
+    };
 
-      onItemClick: function(index, element, config) {
-        element.onclick = function(e) {
-          e.preventDefault();
-          carousel.initiateVideo(index, config, e);
-        };
-      },
+    carousel.prototype.toggle = function() {
+      if (this.isOpen) {
+        this.close();
+      } else {
+        this.open();
+      }
+    };
 
-      buildCarousel: function(config) {
-        this.config = config;
-        this.items.innerHTML = '';
-        this.maxPosition = (-176) * (this.config.length - 1)
-
-        // Initialize carousel items
-        for (var i = 0; i < this.config.length; i++) {
-          var item = document.createElement('li');
-          item.className = 'carousel-item';
-
-          var img = document.createElement('img');
-          img.src = this.config[i].imageSrc;
-          img.className = 'vjs-carousel-thumbnail';
-          img.alt = this.config[i].title;
-          img.style.width = '100%';
-
-          var anchor = document.createElement('a');
-
-          if (!this.config[i].url) {
-            this.config[i].url = '#';
-          }
-
-          anchor.href = this.config[i].url;
-          anchor.title = this.config[i].title;
-          anchor.appendChild(img);
-
-          this.onItemClick(i, anchor, this.config[i]);
-
-          var title = document.createElement('span');
-          title.innerHTML = this.config[i].title;
-          anchor.appendChild(title);
-
-          item.appendChild(anchor);
-          this.items.appendChild(item);
+    carousel.prototype.initiateVideo = function(index, config, trigger) {
+      this.currentVideoIndex = index;
+      if (config.callback !== undefined) {
+        config.callback(player, config, {
+          trigger: trigger,
+          newIndex: this.currentVideoIndex
+        });
+      } else {
+        this.close();
+        if (config.src !== undefined) {
+          player.src(config.src);
+          player.play();
+        } else {
+          window.location = config.url;
         }
       }
     };
+
+    carousel.prototype.onItemClick = function(index, element, config) {
+      var self = this;
+      element.onclick = function(e) {
+        e.preventDefault();
+        self.initiateVideo(index, config, e);
+      };
+    };
+
+    carousel.prototype.buildCarousel = function(config) {
+      this.config = config;
+      this.items.innerHTML = '';
+      this.maxPosition = (-176) * (this.config.length - 1)
+
+      // Initialize carousel items
+      for (var i = 0; i < this.config.length; i++) {
+        var item = document.createElement('li');
+        item.className = 'carousel-item';
+
+        var img = document.createElement('img');
+        img.src = this.config[i].imageSrc;
+        img.className = 'vjs-carousel-thumbnail';
+        img.alt = this.config[i].title;
+        img.style.width = '100%';
+
+        var anchor = document.createElement('a');
+
+        if (!this.config[i].url) {
+          this.config[i].url = '#';
+        }
+
+        anchor.href = this.config[i].url;
+        anchor.title = this.config[i].title;
+        anchor.appendChild(img);
+
+        this.onItemClick(i, anchor, this.config[i]);
+
+        var title = document.createElement('span');
+        title.innerHTML = this.config[i].title;
+        anchor.appendChild(title);
+
+        item.appendChild(anchor);
+        this.items.appendChild(item);
+      }
+
+      this.currentVideoIndex = -1;
+      this.currentPosition = 0;
+      this.items.style.left = this.currentPosition + 'px';
+    };
+
+    player.carousel = new carousel();
 
     /* Menu Button */
-    carousel.controlBarButton.className = 'vjs-button vjs-control vjs-related-carousel-button icon-videojs-carousel-toggle';
+    player.carousel.controlBarButton.className = 'vjs-button vjs-control vjs-related-carousel-button icon-videojs-carousel-toggle';
 
-    carousel.holderDiv.className = 'vjs-related-carousel-holder';
-    carousel.title.innerHTML = 'More Videos';
-    carousel.viewport.className = 'vjs-carousel-viewport';
-    carousel.items.className = 'carousel-items';
-    carousel.leftButton.className = 'vjs-carousel-left-button';
-    carousel.leftButtonContent.className = 'icon-videojs-carousel-left';
-    carousel.rightButton.className = 'vjs-carousel-right-button';
-    carousel.rightButtonContent.className = 'icon-videojs-carousel-right';
+    player.carousel.holderDiv.className = 'vjs-related-carousel-holder';
+    player.carousel.title.innerHTML = 'More Videos';
+    player.carousel.viewport.className = 'vjs-carousel-viewport';
+    player.carousel.items.className = 'carousel-items';
+    player.carousel.leftButton.className = 'vjs-carousel-left-button';
+    player.carousel.leftButtonContent.className = 'icon-videojs-carousel-left';
+    player.carousel.rightButton.className = 'vjs-carousel-right-button';
+    player.carousel.rightButtonContent.className = 'icon-videojs-carousel-right';
 
     // Add all items to DOM
-    player.controlBar.el().appendChild(carousel.controlBarButton);
-    carousel.holderDiv.appendChild(carousel.title);
-    player.el().appendChild(carousel.holderDiv);
-    carousel.holderDiv.appendChild(carousel.viewport);
-    carousel.viewport.appendChild(carousel.items);
-    carousel.leftButton.appendChild(carousel.leftButtonContent);
-    carousel.holderDiv.appendChild(carousel.leftButton);
-    carousel.rightButton.appendChild(carousel.rightButtonContent);
-    carousel.holderDiv.appendChild(carousel.rightButton);
+    player.controlBar.el().appendChild(player.carousel.controlBarButton);
+    player.carousel.holderDiv.appendChild(player.carousel.title);
+    player.el().appendChild(player.carousel.holderDiv);
+    player.carousel.holderDiv.appendChild(player.carousel.viewport);
+    player.carousel.viewport.appendChild(player.carousel.items);
+    player.carousel.leftButton.appendChild(player.carousel.leftButtonContent);
+    player.carousel.holderDiv.appendChild(player.carousel.leftButton);
+    player.carousel.rightButton.appendChild(player.carousel.rightButtonContent);
+    player.carousel.holderDiv.appendChild(player.carousel.rightButton);
 
     // Add event handlers
-    carousel.controlBarButton.onclick = function(e) {
-      carousel.toggle();
+    player.carousel.controlBarButton.onclick = function(e) {
+      player.carousel.toggle();
     };
-    carousel.leftButton.onclick = function() {
-      if (carousel.currentPosition === 0) {
+    player.carousel.leftButton.onclick = function() {
+      if (player.carousel.currentPosition === 0) {
         return;
       }
-      carousel.currentPosition = carousel.currentPosition + 176;
-      carousel.items.style.left = carousel.currentPosition + 'px';
+      player.carousel.currentPosition = player.carousel.currentPosition + 176;
+      player.carousel.items.style.left = player.carousel.currentPosition + 'px';
     };
 
-    carousel.rightButton.onclick = function() {
-      if (carousel.currentPosition <= carousel.maxPosition) {
+    player.carousel.rightButton.onclick = function() {
+      if (player.carousel.currentPosition <= player.carousel.maxPosition) {
         return;
       }
-      carousel.currentPosition = carousel.currentPosition - 176;
-      carousel.items.style.left = carousel.currentPosition + 'px';
+      player.carousel.currentPosition = player.carousel.currentPosition - 176;
+      player.carousel.items.style.left = player.carousel.currentPosition + 'px';
     };
 
-    carousel.buildCarousel(settings);
-
-    player.carousel = carousel;
+    player.carousel.buildCarousel(settings);
 
     // Player events
     player.on('mouseout', function() {
-      if (!carousel.holderDiv.className.match(/vjs-fade-out/)) {
-        carousel.holderDiv.className = carousel.holderDiv.className + " vjs-fade-out";
+      if (!player.carousel.holderDiv.className.match(/(?:^|\s)vjs-fade-out(?!\S)/g)) {
+        player.carousel.holderDiv.className = player.carousel.holderDiv.className + " vjs-fade-out";
       }
     });
     player.on('mouseover', function() {
-      carousel.holderDiv.className = carousel.holderDiv.className.replace(/\s*vjs-fade-out\s*/g, '');
+      player.carousel.holderDiv.className = player.carousel.holderDiv.className.replace(/(?:^|\s)vjs-fade-out(?!\S)/g, '');
     });
     player.on('timeupdate', function() {
       if (player.ended()) {
-        if (carousel.currentVideoIndex === carousel.config.length) {
+        if (player.carousel.currentVideoIndex === player.carousel.config.length) {
           return;
         }
 
-        carousel.currentVideoIndex++;
-        carousel.initiateVideo(carousel.currentVideoIndex, carousel.config[carousel.currentVideoIndex], player);
+        player.carousel.currentVideoIndex++;
+        player.carousel.initiateVideo(player.carousel.currentVideoIndex, player.carousel.config[player.carousel.currentVideoIndex], player);
       }
     });
   });
-}(window.videojs));
+}(videojs));
