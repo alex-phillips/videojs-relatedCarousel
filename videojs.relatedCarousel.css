@@ -127,13 +127,6 @@
   -ms-transition: visibility 1.5s, opacity 1.5s !important;
   -o-transition: visibility 1.5s, opacity 1.5s !important;
   transition: visibility 1.5s, opacity 1.5s !important;
-
-  /* Wait a moment before fading out the control bar */
-  -webkit-transition-delay: 2s !important;
-  -moz-transition-delay: 2s !important;
-  -ms-transition-delay: 2s !important;
-  -o-transition-delay: 2s !important;
-  transition-delay: 2s !important;
 }
 
 .vjs-default-skin.vjs-user-inactive.vjs-playing .vjs-related-carousel-holder {
