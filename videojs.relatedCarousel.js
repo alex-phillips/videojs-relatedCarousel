@@ -48,6 +48,7 @@
         this.maxPosition = 0;
         this.currentVideoIndex = -1;
         this.isOpen = false;
+        this.callbacksEnabled = true;
       };
 
     carousel.prototype.open = function() {
@@ -79,10 +80,12 @@
     carousel.prototype.initiateVideo = function(index, config, trigger) {
       this.currentVideoIndex = index;
       if (config.callback !== undefined) {
-        config.callback(player, config, {
-          trigger: trigger,
-          newIndex: this.currentVideoIndex
-        });
+        if (this.callbacksEnabled) {
+          config.callback(player, config, {
+            trigger: trigger,
+            newIndex: this.currentVideoIndex
+          });
+        }
       } else {
         this.close();
         if (config.src !== undefined) {
