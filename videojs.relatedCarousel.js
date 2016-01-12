@@ -78,15 +78,16 @@
     };
 
     carousel.prototype.initiateVideo = function(index, config, trigger) {
-      this.currentVideoIndex = index;
       if (config.callback !== undefined) {
         if (this.callbacksEnabled) {
+          this.currentVideoIndex = index;
           config.callback(player, config, {
             trigger: trigger,
             newIndex: this.currentVideoIndex
           });
         }
       } else {
+        this.currentVideoIndex = index;
         this.close();
         if (config.src !== undefined) {
           player.src(config.src);
@@ -209,8 +210,7 @@
           return;
         }
 
-        player.carousel.currentVideoIndex++;
-        player.carousel.initiateVideo(player.carousel.currentVideoIndex, player.carousel.config[player.carousel.currentVideoIndex], player);
+        player.carousel.initiateVideo(player.carousel.currentVideoIndex + 1, player.carousel.config[player.carousel.currentVideoIndex + 1], player);
       }
     });
   });
