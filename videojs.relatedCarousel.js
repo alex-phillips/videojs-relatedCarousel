@@ -25,7 +25,7 @@
       }
     ];
 
-  vjs.plugin('relatedCarousel', function(options) {
+  vjs.registerPlugin('relatedCarousel', function(options) {
     var player = this,
         settings = extend({}, defaults, options || {});
 
