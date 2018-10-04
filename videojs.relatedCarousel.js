@@ -17,65 +17,233 @@
       }
       return obj;
     },
-    defaults = [
-      {
-        imageSrc: '',
-        title:   '',
-        url:     ''
-      }
-    ];
+    defaults = [];
 
   vjs.plugin('relatedCarousel', function(options) {
     var player = this,
-        settings = extend({}, defaults, options || {});
+      settings = extend([], defaults, options || []),
+      carousel = function() {
+        this.controlBarButton = document.createElement('div');
 
-    var holderDiv = document.createElement('div');
-    holderDiv.className = 'vjs-related-carousel-holder';
+        this.holderDiv = document.createElement('div');
+        this.title = document.createElement('h5');
 
-    var title = document.createElement('h5');
-    title.innerHTML = 'More Videos';
-    holderDiv.appendChild(title);
+        this.viewport = document.createElement('div');
+        this.items = document.createElement('ul');
 
-    player.el().appendChild(holderDiv);
+        this.leftButton = document.createElement('div');
+        this.leftButtonContent = document.createElement('div');
 
-    for (var i in settings) {
-      var img = document.createElement('img');
-      img.src = settings[i].imageSrc;
-      img.className = 'vjs-carousel-thumbnail';
-      img.alt = settings[i].title;
+        this.rightButton = document.createElement('div');
+        this.rightButtonContent = document.createElement('div');
 
-      var anchor = document.createElement('a');
-      anchor.href = settings[i].url;
-      anchor.appendChild(img);
-      anchor.title = settings[i].title;
+        this.nowPlaying = document.createElement('div');
+        this.nowPlaying.className = 'now-playing';
+        this.nowPlaying.innerHTML = 'NOW PLAYING';
 
-      holderDiv.appendChild(anchor);
+        this.config = null;
+        this.currentPosition = 0;
+        this.maxPosition = 0;
+        this.currentVideoIndex = 0;
+        this.isOpen = false;
+        this.callbacksEnabled = true;
+        this.videoEndedLock = false;
+      };
+
+    if (!settings || settings.length === 0) {
+      return;
     }
 
+    carousel.prototype.open = function() {
+      if (!this.isOpen) {
+        if (!this.holderDiv.className.match(/(?:^|\s)active(?!\S)/g)) {
+          this.holderDiv.className = this.holderDiv.className + " active";
+        }
+      }
+      this.isOpen = true;
+    };
+
+    carousel.prototype.close = function() {
+      if (this.isOpen) {
+        if (this.holderDiv.className.match(/(?:^|\s)active(?!\S)/g)) {
+          this.holderDiv.className = this.holderDiv.className.replace(/(?:^|\s)active(?!\S)/g, '')
+        }
+      }
+      this.isOpen = false;
+    };
+
+    carousel.prototype.toggle = function() {
+      if (this.isOpen) {
+        this.close();
+      } else {
+        this.open();
+      }
+    };
+
+    carousel.prototype.initiateVideo = function(index, config, trigger) {
+      if (this.config.length === 0) {
+        return;
+      }
+
+      if (config.callback !== undefined) {
+        if (this.callbacksEnabled) {
+          this.currentVideoIndex = index;
+          config.callback(player, config, {
+            trigger: trigger,
+            newIndex: this.currentVideoIndex
+          });
+        }
+      } else {
+        this.currentVideoIndex = index;
+        this.close();
+        if (config.src !== undefined) {
+          player.src(config.src);
+          player.play();
+          this.updateNowPlaying();
+        } else {
+          window.location = config.url;
+        }
+      }
+    };
+
+    carousel.prototype.updateNowPlaying = function() {
+      if (this.nowPlaying.parentNode) {
+        this.nowPlaying.parentNode.removeChild(this.nowPlaying);
+      }
+
+      this.items.getElementsByTagName('li')[this.currentVideoIndex].getElementsByTagName('a')[0].appendChild(this.nowPlaying);
+    };
+
+    carousel.prototype.onItemClick = function(index, element, config) {
+      var self = this;
+      element.onclick = function(e) {
+        e.preventDefault();
+        self.initiateVideo(index, config, e);
+      };
+    };
+
+    carousel.prototype.buildCarousel = function(config) {
+      this.config = config;
+      this.items.innerHTML = '';
+      this.maxPosition = (-130) * (this.config.length - 1)
+
+      // Initialize carousel items
+      for (var i = 0; i < this.config.length; i++) {
+        var item = document.createElement('li');
+        item.className = 'carousel-item';
+
+        var img = document.createElement('img');
+        img.src = this.config[i].imageSrc;
+        img.className = 'vjs-carousel-thumbnail';
+        img.alt = this.config[i].title;
+
+        var anchor = document.createElement('a');
+
+        if (!this.config[i].url) {
+          this.config[i].url = '#';
+        }
+
+        anchor.href = this.config[i].url;
+        anchor.title = this.config[i].title;
+        anchor.appendChild(img);
+
+        this.onItemClick(i, anchor, this.config[i]);
+
+        var title = document.createElement('div');
+        title.className = 'carousel-item-title';
+        title.innerHTML = this.config[i].title;
+        anchor.appendChild(title);
+
+        item.appendChild(anchor);
+        this.items.appendChild(item);
+      }
+
+      this.currentVideoIndex = 0;
+      this.currentPosition = 0;
+      this.items.style.left = this.currentPosition + 'px';
+    };
+
+    player.carousel = new carousel();
 
     /* Menu Button */
-    var RelatedCarouselButton = vjs.Button.extend({
-      init: function(player, options) {
-        vjs.Button.call(this, player, options);
+    player.carousel.controlBarButton.className = 'vjs-button vjs-control vjs-related-carousel-button icon-videojs-carousel-toggle';
+
+    player.carousel.holderDiv.className = 'vjs-related-carousel-holder';
+    player.carousel.title.innerHTML = 'More Videos';
+    player.carousel.viewport.className = 'vjs-carousel-viewport';
+    player.carousel.items.className = 'carousel-items';
+    player.carousel.leftButton.className = 'vjs-carousel-left-button';
+    player.carousel.leftButtonContent.className = 'icon-videojs-carousel-left';
+    player.carousel.rightButton.className = 'vjs-carousel-right-button';
+    player.carousel.rightButtonContent.className = 'icon-videojs-carousel-right';
+
+    // Add all items to DOM
+    player.controlBar.el().appendChild(player.carousel.controlBarButton);
+    player.carousel.holderDiv.appendChild(player.carousel.title);
+    player.el().appendChild(player.carousel.holderDiv);
+    player.carousel.holderDiv.appendChild(player.carousel.viewport);
+    player.carousel.viewport.appendChild(player.carousel.items);
+    player.carousel.leftButton.appendChild(player.carousel.leftButtonContent);
+    player.carousel.holderDiv.appendChild(player.carousel.leftButton);
+    player.carousel.rightButton.appendChild(player.carousel.rightButtonContent);
+    player.carousel.holderDiv.appendChild(player.carousel.rightButton);
+
+    // Add event handlers
+    player.carousel.controlBarButton.onclick = function(e) {
+      player.carousel.toggle();
+    };
+    player.carousel.leftButton.onclick = function() {
+      if (player.carousel.currentPosition === 0) {
+        return;
+      }
+      player.carousel.currentPosition = player.carousel.currentPosition + 130;
+      player.carousel.items.style.left = player.carousel.currentPosition + 'px';
+    };
+
+    player.carousel.rightButton.onclick = function() {
+      if (player.carousel.currentPosition <= player.carousel.maxPosition) {
+        return;
+      }
+      player.carousel.currentPosition = player.carousel.currentPosition - 130;
+      player.carousel.items.style.left = player.carousel.currentPosition + 'px';
+    };
+
+    player.carousel.buildCarousel(settings);
+
+    // Player events
+    player.on('mouseout', function(e) {
+      if (!player.carousel.holderDiv.className.match(/(?:^|\s)vjs-fade-out(?!\S)/g)) {
+
+        /* Fix for Safari to prevent fading of carousel at wrong time */
+        if (navigator.userAgent.indexOf('Safari') != -1 && navigator.userAgent.indexOf('Chrome') == -1){
+          var toEl = e.toElement;
+          if(player.el().contains(toEl)){
+            return;
+          }
+        }
+        player.carousel.holderDiv.className = player.carousel.holderDiv.className + " vjs-fade-out";
       }
     });
 
-    RelatedCarouselButton.prototype.buttonText = 'Related Videos';
+    player.on('mouseover', function(e) {
+      player.carousel.holderDiv.className = player.carousel.holderDiv.className.replace(/(?:^|\s)vjs-fade-out(?!\S)/g, '');
+    });
 
-    RelatedCarouselButton.prototype.buildCSSClass = function(){
-      return 'vjs-related-carousel-button ' + vjs.Button.prototype.buildCSSClass.call(this);
-    };
+    player.on('timeupdate', function() {
+      if (player.ended() && player.duration() !== Infinity) {
+        if (player.carousel.videoEndedLock) {
+          return;
+        }
+        player.carousel.videoEndedLock = true;
+        player.one('play', function() {
+          player.carousel.videoEndedLock = false;
+        });
+        if (player.carousel.currentVideoIndex === player.carousel.config.length) {
+          return;
+        }
 
-    RelatedCarouselButton.prototype.onClick = function(e){
-      holderDiv.classList.toggle('active');
-    };
-
-    player.ready(function(){
-      var button = new RelatedCarouselButton(player);
-      player.controlBar.addChild(button);
+        player.carousel.initiateVideo(player.carousel.currentVideoIndex + 1, player.carousel.config[player.carousel.currentVideoIndex + 1], player);
+      }
     });
   });
-}(window.videojs));
-
-
-
+}(videojs));
